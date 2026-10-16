@@ -1,23 +1,14 @@
 using System;
-using System.Runtime.InteropServices;
+using System.Text;
+using System.Linq;
 using System.Management;
 using Microsoft.Win32;
+using System.Net.NetworkInformation;
 
 namespace TTY_SPOOFER_DAYZ
 {
     class Spoof
     {
-        // --- P/Invoke для работы с реестром и WMI ---
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern bool RegSetValueEx(string subKey, string valueName, uint reserved, int dwType, byte[] data, int cbData);
-
-        [DllImport("advapi32.dll", SetLastError = true)]
-        private static extern bool RegOpenKeyEx(IntPtr hKey, string subKey, uint ulOptions, int samDesired, out IntPtr phkResult);
-
-        // Типы реестра
-        private const int REG_SZ = 1;
-        private const int REG_BINARY = 0;
-
         /// <summary>
         /// Выполняет все подмены HWID.
         /// </summary>
@@ -38,34 +29,28 @@ namespace TTY_SPOOFER_DAYZ
         {
             try
             {
-                // Получаем текущий серийный номер процессора через WMI
                 string currentSerial = GetWmiValue("SELECT SerialNumber FROM Win32_Processor");
-
-                if (string.IsNullOrEmpty(currentSerial))
-                    currentSerial = "UNKNOWN";
-
+                if (string.IsNullOrEmpty(currentSerial)) currentSerial = "UNKNOWN";
                 Console.WriteLine($"\n[*] CPU Serial Number: {currentSerial}");
 
-                // Генерируем случайный серийный номер
                 string newSerial = GenerateRandomString(16);
-
                 Console.WriteLine($"[+] Spoofing to: {newSerial}");
 
-                // Записываем в реестр (CPUID HWID)
-                string cpuKey = @"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Enum\Processor";
-                IntPtr hKey;
-                if (!RegOpenKeyEx((IntPtr)-1, cpuKey, 0, 26, out hKey)) // KEY_READ | KEY_WOW64_64KEY
+                // Примечание: Реальный спуфинг CPU требует ядерного драйвера. 
+                // Запись в реестр меняет только кэш/определенные значения, но не сам WMI-ответ.
+                string cpuPath = @"SYSTEM\CurrentControlSet\Enum\Processor";
+                using (RegistryKey key = Registry.LocalMachine.OpenSubKey(cpuPath, true))
                 {
-                    byte[] data = Encoding.UTF8.GetBytes(newSerial);
-                    RegSetValueEx(cpuKey, "SerialNumber", 0, REG_SZ, data, (int)data.Length);
-                    Console.WriteLine("[+] CPU Serial Number spoofed successfully!");
+                    if (key != null)
+                    {
+                        key.SetValue("SerialNumber", newSerial, RegistryValueKind.String);
+                        Console.WriteLine("[+] CPU Serial Number spoofed successfully!");
+                    }
+                    else
+                    {
+                        Console.WriteLine("[-] Failed to open registry key for CPU Serial Number.");
+                    }
                 }
-                else
-                {
-                    Console.WriteLine("[-] Failed to open registry key for CPU Serial Number.");
-                }
-
-                CloseHandle(hKey);
             }
             catch (Exception ex)
             {
@@ -81,30 +66,21 @@ namespace TTY_SPOOFER_DAYZ
             try
             {
                 string currentSerial = GetWmiValue("SELECT SerialNumber FROM Win32_BaseBoard");
-
-                if (string.IsNullOrEmpty(currentSerial))
-                    currentSerial = "UNKNOWN";
-
+                if (string.IsNullOrEmpty(currentSerial)) currentSerial = "UNKNOWN";
                 Console.WriteLine($"\n[*] Baseboard Serial Number: {currentSerial}");
 
                 string newSerial = GenerateRandomString(16);
-
                 Console.WriteLine($"[+] Spoofing to: {newSerial}");
 
-                string baseboardKey = @"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Enum\PCI";
-                IntPtr hKey;
-                if (!RegOpenKeyEx((IntPtr)-1, baseboardKey, 0, 26, out hKey))
+                string baseboardPath = @"SYSTEM\CurrentControlSet\Enum\PCI";
+                using (RegistryKey key = Registry.LocalMachine.OpenSubKey(baseboardPath, true))
                 {
-                    byte[] data = Encoding.UTF8.GetBytes(newSerial);
-                    RegSetValueEx(baseboardKey, "SerialNumber", 0, REG_SZ, data, (int)data.Length);
-                    Console.WriteLine("[+] Baseboard Serial Number spoofed successfully!");
+                    if (key != null)
+                    {
+                        key.SetValue("SerialNumber", newSerial, RegistryValueKind.String);
+                        Console.WriteLine("[+] Baseboard Serial Number spoofed successfully!");
+                    }
                 }
-                else
-                {
-                    Console.WriteLine("[-] Failed to open registry key for Baseboard Serial Number.");
-                }
-
-                CloseHandle(hKey);
             }
             catch (Exception ex)
             {
@@ -120,30 +96,21 @@ namespace TTY_SPOOFER_DAYZ
             try
             {
                 string currentSerial = GetWmiValue("SELECT SerialNumber FROM Win32_Chassis");
-
-                if (string.IsNullOrEmpty(currentSerial))
-                    currentSerial = "UNKNOWN";
-
+                if (string.IsNullOrEmpty(currentSerial)) currentSerial = "UNKNOWN";
                 Console.WriteLine($"\n[*] Chassis Serial Number: {currentSerial}");
 
                 string newSerial = GenerateRandomString(16);
-
                 Console.WriteLine($"[+] Spoofing to: {newSerial}");
 
-                string chassisKey = @"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Enum\PCI";
-                IntPtr hKey;
-                if (!RegOpenKeyEx((IntPtr)-1, chassisKey, 0, 26, out hKey))
+                string chassisPath = @"SYSTEM\CurrentControlSet\Enum\PCI";
+                using (RegistryKey key = Registry.LocalMachine.OpenSubKey(chassisPath, true))
                 {
-                    byte[] data = Encoding.UTF8.GetBytes(newSerial);
-                    RegSetValueEx(chassisKey, "SerialNumber", 0, REG_SZ, data, (int)data.Length);
-                    Console.WriteLine("[+] Chassis Serial Number spoofed successfully!");
+                    if (key != null)
+                    {
+                        key.SetValue("SerialNumber", newSerial, RegistryValueKind.String);
+                        Console.WriteLine("[+] Chassis Serial Number spoofed successfully!");
+                    }
                 }
-                else
-                {
-                    Console.WriteLine("[-] Failed to open registry key for Chassis Serial Number.");
-                }
-
-                CloseHandle(hKey);
             }
             catch (Exception ex)
             {
@@ -160,39 +127,28 @@ namespace TTY_SPOOFER_DAYZ
             {
                 string currentVersion = GetWmiValue("SELECT Version FROM Win32_BIOS");
                 string currentSerial = GetWmiValue("SELECT SerialNumber FROM Win32_BIOS");
-
-                if (string.IsNullOrEmpty(currentVersion))
-                    currentVersion = "UNKNOWN";
-                if (string.IsNullOrEmpty(currentSerial))
-                    currentSerial = "UNKNOWN";
-
+                
+                if (string.IsNullOrEmpty(currentVersion)) currentVersion = "UNKNOWN";
+                if (string.IsNullOrEmpty(currentSerial)) currentSerial = "UNKNOWN";
+                
                 Console.WriteLine($"\n[*] BIOS Version: {currentVersion}");
                 Console.WriteLine($"[*] BIOS Serial Number: {currentSerial}");
 
                 string newVersion = GenerateRandomString(16);
                 string newSerial = GenerateRandomString(16);
-
                 Console.WriteLine($"[+] Spoofing Version to: {newVersion}");
                 Console.WriteLine($"[+] Spoofing Serial to: {newSerial}");
 
-                string biosKey = @"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Enum\PCI";
-                IntPtr hKey;
-                if (!RegOpenKeyEx((IntPtr)-1, biosKey, 0, 26, out hKey))
+                string biosPath = @"SYSTEM\CurrentControlSet\Enum\PCI";
+                using (RegistryKey key = Registry.LocalMachine.OpenSubKey(biosPath, true))
                 {
-                    byte[] versionData = Encoding.UTF8.GetBytes(newVersion);
-                    RegSetValueEx(biosKey, "BIOSVersion", 0, REG_SZ, versionData, (int)versionData.Length);
-
-                    byte[] serialData = Encoding.UTF8.GetBytes(newSerial);
-                    RegSetValueEx(biosKey, "SerialNumber", 0, REG_SZ, serialData, (int)serialData.Length);
-
-                    Console.WriteLine("[+] BIOS Version and Serial spoofed successfully!");
+                    if (key != null)
+                    {
+                        key.SetValue("BIOSVersion", newVersion, RegistryValueKind.String);
+                        key.SetValue("SerialNumber", newSerial, RegistryValueKind.String);
+                        Console.WriteLine("[+] BIOS Version and Serial spoofed successfully!");
+                    }
                 }
-                else
-                {
-                    Console.WriteLine("[-] Failed to open registry key for BIOS.");
-                }
-
-                CloseHandle(hKey);
             }
             catch (Exception ex)
             {
@@ -207,38 +163,31 @@ namespace TTY_SPOOFER_DAYZ
         {
             try
             {
-                ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT * FROM Win32_NetworkAdapterConfiguration WHERE IPEnabled = True");
-
+                var adapters = NetworkInterface.GetAllNetworkInterfaces();
                 Console.WriteLine("\n[*] MAC Addresses:");
-
-                foreach (ManagementObject obj in searcher.Get())
+                
+                foreach (var adapter in adapters)
                 {
-                    string mac = obj["MACAddress"]?.ToString() ?? "UNKNOWN";
-                    string currentIP = obj["IPAddress"]?.ToString() ?? "";
-                    if (!string.IsNullOrEmpty(currentIP))
-                        Console.WriteLine($"    [{mac}] - IP: {currentIP}");
+                    if (adapter.OperationalStatus != OperationalStatus.Up) continue;
 
-                    // Генерируем случайный MAC
-                    byte[] newMacBytes = GenerateRandomMAC();
-                    string newMac = BitConverter.ToString(newMacBytes).Replace("-", ":");
+                    string mac = adapter.GetPhysicalAddress().ToString();
+                    Console.WriteLine($"    [{adapter.Name}] - MAC: {mac}");
 
+                    string newMac = GenerateRandomMAC();
                     Console.WriteLine($"[+] Spoofing to: {newMac}");
 
-                    // Записываем в реестр (NetworkCard HWID)
-                    string networkKey = @"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Enum\PCI";
-                    IntPtr hKey;
-                    if (!RegOpenKeyEx((IntPtr)-1, networkKey, 0, 26, out hKey))
-                    {
-                        byte[] macData = Encoding.UTF8.GetBytes(newMac);
-                        RegSetValueEx(networkKey, "MACAddress", 0, REG_SZ, macData, (int)macData.Length);
-                        Console.WriteLine("[+] MAC Address spoofed successfully!");
-                    }
-                    else
-                    {
-                        Console.WriteLine("[-] Failed to open registry key for MAC Address.");
-                    }
+                    // Правильный путь в реестре для смены MAC-адреса
+                    string guid = adapter.Id;
+                    string regPath = $@"SYSTEM\CurrentControlSet\Control\Class\{{4D36E972-E325-11CE-BFC1-08002BE10318}}\{guid}";
 
-                    CloseHandle(hKey);
+                    using (RegistryKey key = Registry.LocalMachine.OpenSubKey(regPath, true))
+                    {
+                        if (key != null)
+                        {
+                            key.SetValue("NetworkAddress", newMac, RegistryValueKind.String);
+                            Console.WriteLine("[+] MAC Address spoofed in registry!");
+                        }
+                    }
                 }
             }
             catch (Exception ex)
@@ -254,32 +203,27 @@ namespace TTY_SPOOFER_DAYZ
         {
             try
             {
-                string currentGUID = GetWmiValue("SELECT Value FROM Win32_UUID");
-
-                if (string.IsNullOrEmpty(currentGUID))
-                    currentGUID = "UNKNOWN";
-
+                // Win32_UUID не существует, правильный класс для UUID - Win32_ComputerSystemProduct
+                string currentGUID = GetWmiValue("SELECT UUID FROM Win32_ComputerSystemProduct");
+                if (string.IsNullOrEmpty(currentGUID)) currentGUID = "UNKNOWN";
                 Console.WriteLine($"\n[*] UUID / MachineGuid: {currentGUID}");
 
-                string newGUID = GenerateRandomString(36); // GUID format
-
+                string newGUID = Guid.NewGuid().ToString();
                 Console.WriteLine($"[+] Spoofing to: {newGUID}");
 
-                // Записываем в реестр (MachineGuid HWID)
-                string machineKey = @"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\ComputerName\ComputerDescription";
-                IntPtr hKey;
-                if (!RegOpenKeyEx((IntPtr)-1, machineKey, 0, 26, out hKey))
+                // Правильный путь для MachineGuid
+                using (RegistryKey key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Cryptography", true))
                 {
-                    byte[] data = Encoding.UTF8.GetBytes(newGUID);
-                    RegSetValueEx(machineKey, "MachineGuid", 0, REG_SZ, data, (int)data.Length);
-                    Console.WriteLine("[+] UUID / MachineGuid spoofed successfully!");
+                    if (key != null)
+                    {
+                        key.SetValue("MachineGuid", newGUID, RegistryValueKind.String);
+                        Console.WriteLine("[+] UUID / MachineGuid spoofed successfully!");
+                    }
+                    else
+                    {
+                        Console.WriteLine("[-] Failed to open registry key for MachineGuid.");
+                    }
                 }
-                else
-                {
-                    Console.WriteLine("[-] Failed to open registry key for MachineGuid.");
-                }
-
-                CloseHandle(hKey);
             }
             catch (Exception ex)
             {
@@ -287,47 +231,46 @@ namespace TTY_SPOOFER_DAYZ
             }
         }
 
-        // --- Вспомогательные методы ---
+        // ================= ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ =================
 
         private static string GetWmiValue(string query)
         {
             try
             {
-                ManagementObjectSearcher searcher = new ManagementObjectSearcher(query);
-                foreach (ManagementObject obj in searcher.Get())
+                using (var searcher = new ManagementObjectSearcher(query))
                 {
-                    return obj["SerialNumber"]?.ToString() ?? obj["Value"]?.ToString();
+                    var results = searcher.Get().Cast<ManagementObject>().ToList();
+                    if (results.Count == 0) return "";
+                    
+                    foreach (var prop in results[0].Properties)
+                    {
+                        if (prop.Name == "SerialNumber" || prop.Name == "UUID" || prop.Name == "Version")
+                            return prop.Value?.ToString() ?? "";
+                    }
                 }
             }
-            catch { }
-            return null;
+            catch { /* ignore */ }
+            return "";
         }
 
         private static string GenerateRandomString(int length)
         {
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
             var random = new Random();
-            char[] result = new char[length];
-            for (int i = 0; i < length; i++)
-                result[i] = chars[random.Next(chars.Length)];
-            return new string(result);
+            return new string(Enumerable.Repeat(chars, length)
+                .Select(s => s[random.Next(s.Length)]).ToArray());
         }
 
-        private static byte[] GenerateRandomMAC()
+        private static string GenerateRandomMAC()
         {
-            var random = new Random();
-            byte[] mac = new byte[6];
-            for (int i = 0; i < 6; i++)
-                mac[i] = (byte)random.Next(256);
-            return mac;
-        }
-
-        private static void CloseHandle(IntPtr handle)
-        {
-            if (handle != IntPtr.Zero)
-            {
-                Marshal.Release(handle);
-            }
+            var rnd = new Random();
+            byte[] bytes = new byte[6];
+            for (int i = 0; i < 6; i++) bytes[i] = (byte)rnd.Next(256);
+            
+            // Делаем MAC локально администрируемым (второй бит первого байта = 1)
+            bytes[0] = (byte)((bytes[0] & 0xFC) | 0x02); 
+            
+            return BitConverter.ToString(bytes).Replace("-", "").ToLowerInvariant();
         }
     }
 }
