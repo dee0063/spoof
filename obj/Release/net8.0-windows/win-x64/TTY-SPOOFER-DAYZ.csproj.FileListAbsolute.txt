@@ -1,0 +1,5 @@
+C:\Users\maksp\.lmstudio\apps\bionic\projects\d49037d8-47f4-5808-9028-c707de117f8f\workspace\TTY-SPOOFER-DAYZ\obj\Release\net8.0-windows\win-x64\TTY-SPOOFER-DAYZ.csproj.AssemblyReference.cache
+C:\Users\maksp\.lmstudio\apps\bionic\projects\d49037d8-47f4-5808-9028-c707de117f8f\workspace\TTY-SPOOFER-DAYZ\obj\Release\net8.0-windows\win-x64\TTY-SPOOFER-DAYZ.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\maksp\.lmstudio\apps\bionic\projects\d49037d8-47f4-5808-9028-c707de117f8f\workspace\TTY-SPOOFER-DAYZ\obj\Release\net8.0-windows\win-x64\TTY-SPOOFER-DAYZ.AssemblyInfoInputs.cache
+C:\Users\maksp\.lmstudio\apps\bionic\projects\d49037d8-47f4-5808-9028-c707de117f8f\workspace\TTY-SPOOFER-DAYZ\obj\Release\net8.0-windows\win-x64\TTY-SPOOFER-DAYZ.AssemblyInfo.cs
+C:\Users\maksp\.lmstudio\apps\bionic\projects\d49037d8-47f4-5808-9028-c707de117f8f\workspace\TTY-SPOOFER-DAYZ\obj\Release\net8.0-windows\win-x64\TTY-SPOOFER-DAYZ.csproj.CoreCompileInputs.cache

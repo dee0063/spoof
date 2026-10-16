@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "4ROT0i0ZNUM=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\maksp\\.lmstudio\\apps\\bionic\\projects\\d49037d8-47f4-5808-9028-c707de117f8f\\workspace\\TTY-SPOOFER-DAYZ\\TTY-SPOOFER-DAYZ.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\maksp\\.nuget\\packages\\system.codedom\\7.0.0\\system.codedom.7.0.0.nupkg.sha512",
+    "C:\\Users\\maksp\\.nuget\\packages\\system.management\\7.0.0\\system.management.7.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}
