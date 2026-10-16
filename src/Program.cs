@@ -1,7 +1,6 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
-using TTY_SPOOFER_DAYZ;
 
 namespace TTY_SPOOFER_DAYZ
 {
@@ -9,90 +8,60 @@ namespace TTY_SPOOFER_DAYZ
     {
         static void Main(string[] args)
         {
-            // Проверка прав администратора
-            if (!IsAdmin())
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
+
+            if (args.Length == 0 || args[0].ToLower() == "menu")
             {
-                Console.WriteLine("\n[!] HWID spoofing requires administrator privileges!");
-                Console.WriteLine("[*] Please run this program as Administrator.\n");
-                return;
+                Menus.ShowMenu();
             }
-
-            // Парсинг аргументов командной строки
-            string mode = args.Length > 0 ? args[0].ToLower() : "menu";
-
-            if (mode == "help")
+            else if (args.Length > 0 && Enum.TryParse(args[0], ignoreCase: true, out SpoofMode mode))
             {
-                PrintHelp();
-                return;
-            }
+                switch (mode)
+                {
+                    case SpoofMode.CPU:
+                        try
+                        {
+                            string currentSerial = GetWmiValue("SELECT SerialNumber FROM Win32_Processor");
+                            if (string.IsNullOrEmpty(currentSerial)) currentSerial = "UNKNOWN";
+                            Console.WriteLine($"\n[*] CPU Serial Number: {currentSerial}");
 
-            switch (mode)
-            {
-                case "cpu":
-                    Spoof.SpoofCPU();
-                    break;
-                case "baseboard":
-                    Spoof.SpoofBaseboardSerial();
-                    break;
-                case "chassis":
-                    Spoof.SpoofChassisSerial();
-                    break;
-                case "bios":
-                    Spoof.SpoofBIOSVersionAndSerial();
-                    break;
-                case "mac":
-                    Spoof.SpoofMACAddresses();
-                    break;
-                case "uuid":
-                    Spoof.SpoofUUID_GUID();
-                    break;
-                case "all":
-                case "full":
-                    Spoof.ExecuteAllProtections();
-                    break;
-                default:
-                    Console.WriteLine($"\n[!] Unknown mode '{mode}'. Use 'help' for available modes.\n");
-                    PrintHelp();
-                    return;
-            }
+                            string newSerial = GenerateRandomString(16);
+                            Console.WriteLine($"[+] Spoofing to: {newSerial}");
 
-            Console.WriteLine("\n[*] HWID spoofing complete. Press any key to exit...");
-            Console.ReadKey();
-        }
+                            string cpuKey = @"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Enum\Processor";
+                            IntPtr hKey;
+                            if (!RegOpenKeyEx((IntPtr)-1, cpuKey, 0, 26, out hKey))
+                            {
+                                byte[] data = Encoding.UTF8.GetBytes(newSerial);
+                                RegSetValueEx(cpuKey, "SerialNumber", 0, REG_SZ, data, (int)data.Length);
+                                Console.WriteLine("[+] CPU Serial Number spoofed successfully!");
+                            }
+                            else
+                            {
+                                Console.WriteLine("[-] Failed to open registry key for CPU Serial Number.");
+                            }
 
-        static bool IsAdmin()
-        {
-            var startInfo = new ProcessStartInfo("powershell", "-Command \"[Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent().IsInRole([Security.Principal.WindowsBuiltInRole] 'Administrator')\"")
-            {
-                UseShellExecute = true,
-                RedirectStandardOutput = true
-            };
+                            CloseHandle(hKey);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"[!] Error spoofing CPU: {ex.Message}");
+                        }
+                        break;
 
-            using var process = Process.Start(startInfo);
-            if (process == null) return false;
+                    case SpoofMode.Baseboard:
+                        try
+                        {
+                            string currentSerial = GetWmiValue("SELECT SerialNumber FROM Win32_BaseBoard");
+                            if (string.IsNullOrEmpty(currentSerial)) currentSerial = "UNKNOWN";
+                            Console.WriteLine($"\n[*] Baseboard Serial Number: {currentSerial}");
 
-            string output = process.StandardOutput.ReadToEnd();
-            return output.Contains("True");
-        }
+                            string newSerial = GenerateRandomString(16);
+                            Console.WriteLine($"[+] Spoofing to: {newSerial}");
 
-        static void PrintHelp()
-        {
-            Console.WriteLine("\n========================================");
-            Console.WriteLine("   TTY-SPOOFER-DAYZ — Help");
-            Console.WriteLine("========================================\n");
-            Console.WriteLine("[*] Usage: TTY-SPOOFER-DAYZ.exe <mode>");
-            Console.WriteLine("\n[*] Available modes:");
-            Console.WriteLine("    cpu       - Spoof CPU Serial Number");
-            Console.WriteLine("    baseboard - Spoof Baseboard Serial Number");
-            Console.WriteLine("    chassis   - Spoof Chassis Serial Number");
-            Console.WriteLine("    bios      - Spoof BIOS Version & Serial");
-            Console.WriteLine("    mac       - Spoof MAC Addresses (All Cards)");
-            Console.WriteLine("    uuid      - Spoof UUID / MachineGuid");
-            Console.WriteLine("    all       - Full HWID Spoof (All components)");
-            Console.WriteLine("    full      - Full HWID Spoof (All components)");
-            Console.WriteLine("    menu      - Interactive Menu Mode");
-            Console.WriteLine("    help      - Show this help message");
-            Console.WriteLine("\n[*] Run without arguments to enter interactive menu mode.\n");
-        }
-    }
-}
+                            string baseboardKey = @"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Enum\PCI";
+                            IntPtr hKey;
+                            if (!RegOpenKeyEx((IntPtr)-1, baseboardKey, 0, 26, out hKey))
+                            {
+                                byte[] data = Encoding.UTF8.GetBytes(newSerial);
+                                RegSetValueEx(baseboardKey, "
