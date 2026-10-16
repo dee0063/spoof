@@ -1,0 +1,10 @@
+if (!(Test-Path .gitignore)) {
+@"
+bin/
+obj/
+.vs/
+*.user
+*.suo
+TestResults/
+"@ | Set-Content .gitignore
+}
