@@ -27,11 +27,6 @@ namespace TTY_SPOOFER_DAYZ
             return !RegOpenKeyEx((IntPtr)-1, subKey, 0, KEY_READ, out hKey);
         }
 
-        public static bool RegSetValueEx(string subKey, string valueName, uint reserved, int dataType, byte[] data, int dataLength)
-        {
-            return RegSetValueEx(subKey, valueName, reserved, dataType, data, dataLength);
-        }
-
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         static extern bool RegOpenKeyEx(IntPtr hKey, string subKey, uint ulOptions, int samDesired, out IntPtr phkResult);
 
